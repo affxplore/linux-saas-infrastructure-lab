@@ -34,6 +34,7 @@ sudo systemctl start nginx
 2. INC-002: Application Container Crash / Unresponsive
 Symptom: Nginx returns 502 Bad Gateway, Prometheus target saas-app reports DOWN.
 
+Bash
 # Check container status and exit code
 docker ps -a | grep saas-app
 
@@ -45,6 +46,7 @@ docker compose restart saas-app
 3. INC-003: MySQL Database Service Interruption
 Symptom: Application throws database connection errors / timeouts.
 
+Bash
 # Check container status
 docker ps | grep mysql-db
 
@@ -60,6 +62,7 @@ LATEST_BACKUP=$(ls -t /opt/backups/*.tar.gz | head -n 1)
 4. INC-004: High CPU / Memory Exhaustion
 Symptom: Grafana CPU/RAM spikes to 100%, API latency increases.
 
+Bash
 # Identify top resource-consuming processes
 ps aux --sort=-%cpu | head -n 10
 ps aux --sort=-%mem | head -n 10
@@ -72,6 +75,7 @@ sudo sync; echo 3 | sudo tee /proc/sys/vm/drop_caches
 5. INC-005: Disk Space Depletion
 Symptom: Write operations fail, Grafana disk metric < 5% free.
 
+Bash
 # Inspect disk usage
 df -h /
 
@@ -84,6 +88,7 @@ sudo logrotate -f /etc/logrotate.d/nginx-saas
 6. INC-006: Nginx Routing / Misconfiguration Error
 Symptom: HTTP 502 Bad Gateway while backend containers are UP.
 
+Bash
 # Test Nginx configuration for syntax errors
 sudo nginx -t
 
