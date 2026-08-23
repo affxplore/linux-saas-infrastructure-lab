@@ -1,4 +1,3 @@
-```markdown
 # Operations Runbook & Troubleshooting Guide
 
 Dokumen ini berisi panduan operasional harian dan prosedur darurat untuk penanganan insiden infrastruktur (INC-001 s/d INC-006).
