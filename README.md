@@ -18,7 +18,7 @@
 > ### 📖 Complete Step-by-Step Implementation Guide
 > Untuk panduan langkah-demi-langkah (Phase 1 s/d Phase 16) yang lengkap dengan seluruh konfigurasi, screenshot terminal/dashboard, dan catatan eksekusi command, silakan akses:
 > 
-> 👉 **[Lihat Dokumentasi Lengkap di Notion]((https://bustling-bat-5ce.notion.site/Linux-SaaS-Infrastructure-Monitoring-Operations-Lab-3c6adecfe66d8097b6a4c35e3aef83e4?source=copy_link))** *(Ganti dengan tautan Notion Anda)*
+> 👉 **[Lihat Dokumentasi Lengkap di Notion](https://bustling-bat-5ce.notion.site/Linux-SaaS-Infrastructure-Monitoring-Operations-Lab-3c6adecfe66d8097b6a4c35e3aef83e4?source=copy_link)** *(Ganti dengan tautan Notion Anda)*
 
 ---
 
@@ -76,41 +76,41 @@ This lab demonstrates how to design, deploy, secure, monitor, and maintain a rob
 
 ```mermaid
 flowchart TD
-    User([🌐 Internet Traffic]) -->|TCP 80 / 443| SG[AWS Security Group<br/><code>sg-saas-lab</code>]
-    Admin([👨‍💻 SRE / Admin]) -->|TCP 22 SSH| SG
+    User(["🌐 Internet Traffic"]) -->|TCP 80 / 443| SG["AWS Security Group<br/>sg-saas-lab"]
+    Admin(["👨‍💻 SRE / Admin"]) -->|TCP 22 SSH| SG
 
     subgraph Host["AWS EC2: saas-infra-node-01 (Ubuntu 24.04 LTS)"]
-        SG -->|UFW Inbound Allowed| UFW{UFW Firewall}
+        SG -->|"UFW Inbound Allowed"| UFW{"UFW Firewall"}
         
-        UFW -->|Port 22| SSHD[OpenSSH Server<br/>Key-Only / No Root]
-        UFW -->|Port 80/443| NGINX[Nginx Reverse Proxy]
+        UFW -->|"Port 22"| SSHD["OpenSSH Server<br/>Key-Only / No Root"]
+        UFW -->|"Port 80/443"| NGINX["Nginx Reverse Proxy"]
 
         subgraph SystemServices["Host System Services"]
-            NODE_EXP[Node Exporter Service<br/><code>127.0.0.1:9100</code>]
-            CRON[Cron Daemon<br/>Daily Backup @ 02:00]
-            LOGROTATE[Logrotate<br/>Nginx 14-Day Rotation]
+            NODE_EXP["Node Exporter Service<br/>127.0.0.1:9100"]
+            CRON["Cron Daemon<br/>Daily Backup @ 02:00"]
+            LOGROTATE["Logrotate<br/>Nginx 14-Day Rotation"]
         end
 
         subgraph DockerCompose["Docker Compose V2 Environment"]
             subgraph AppNet["app-network (Bridge)"]
-                APP[saas-app<br/>Python 3.11 / Flask<br/><code>127.0.0.1:8000</code>]
-                MYSQL[(mysql-db<br/>MySQL 8.0<br/><code>mysql-db:3306</code>)]
+                APP["saas-app<br/>Python 3.11 / Flask<br/>127.0.0.1:8000"]
+                MYSQL[("mysql-db<br/>MySQL 8.0<br/>mysql-db:3306")]
             end
 
             subgraph MonNet["monitoring-net (Bridge)"]
-                PROM[Prometheus Server<br/><code>127.0.0.1:9090</code>]
-                GRAFANA[Grafana Dashboard<br/><code>127.0.0.1:3000</code>]
-                KUMA[Uptime Kuma<br/><code>127.0.0.1:3001</code>]
+                PROM["Prometheus Server<br/>127.0.0.1:9090"]
+                GRAFANA["Grafana Dashboard<br/>127.0.0.1:3000"]
+                KUMA["Uptime Kuma<br/>127.0.0.1:3001"]
             end
         end
 
-        NGINX -->|proxy_pass /| APP
-        NGINX -->|proxy_pass /grafana/| GRAFANA
-        NGINX -->|proxy_pass /kuma/ + WebSocket| KUMA
-        NGINX -->|location /metrics: 403 Forbidden| DENY[Access Denied]
+        NGINX -->|"proxy_pass /"| APP
+        NGINX -->|"proxy_pass /grafana/"| GRAFANA
+        NGINX -->|"proxy_pass /kuma/ + WebSocket"| KUMA
+        NGINX -->|"location /metrics: 403 Forbidden"| DENY["Access Denied"]
         
-        APP -->|Internal DB Query| MYSQL
-        CRON -->|mysqldump| MYSQL
+        APP -->|"Internal DB Query"| MYSQL
+        CRON -->|"mysqldump"| MYSQL
     end
 
     classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:white;
@@ -131,24 +131,24 @@ flowchart TD
 ```mermaid
 flowchart LR
     subgraph Exporters["Telemetry Sources"]
-        NE[Node Exporter<br/><code>Host CPU, RAM, Disk, Net</code>]
-        APP_M[SaaS App <code>/metrics</code><br/><code>Request Counters & Latency</code>]
-        SYNTH[Uptime Kuma<br/><code>20s HTTP Availability Probes</code>]
+        NE["Node Exporter<br/>Host CPU, RAM, Disk, Net"]
+        APP_M["SaaS App /metrics<br/>Request Counters & Latency"]
+        SYNTH["Uptime Kuma<br/>20s HTTP Availability Probes"]
     end
 
     subgraph Collection["Metrics Engine"]
-        PROM[Prometheus Time-Series DB<br/><code>15s Scrape Interval</code>]
+        PROM["Prometheus Time-Series DB<br/>15s Scrape Interval"]
     end
 
     subgraph Visualization["Dashboards & Alerts"]
-        GRAF[Grafana Visualization<br/><code>Node Exporter Full (ID: 1860)</code>]
-        KUMA_UI[Uptime Kuma Status Page<br/><code>Real-Time Heartbeat Grid</code>]
+        GRAF["Grafana Visualization<br/>Node Exporter Full (ID: 1860)"]
+        KUMA_UI["Uptime Kuma Status Page<br/>Real-Time Heartbeat Grid"]
     end
 
-    NE -->|Scrape :9100| PROM
-    APP_M -->|Scrape :8000| PROM
-    PROM -->|Data Source Query| GRAF
-    SYNTH -->|HTTP Checks| KUMA_UI
+    NE -->|"Scrape :9100"| PROM
+    APP_M -->|"Scrape :8000"| PROM
+    PROM -->|"Data Source Query"| GRAF
+    SYNTH -->|"HTTP Checks"| KUMA_UI
 ```
 
 ### Network Isolation & Port Exposure Matrix
