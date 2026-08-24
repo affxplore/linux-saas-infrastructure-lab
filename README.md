@@ -18,7 +18,7 @@
 > ### 📖 Complete Step-by-Step Implementation Guide
 > Untuk panduan langkah-demi-langkah (Phase 1 s/d Phase 16) yang lengkap dengan seluruh konfigurasi, screenshot terminal/dashboard, dan catatan eksekusi command, silakan akses:
 > 
-> 👉 **[Lihat Dokumentasi Lengkap di Notion](https://your-notion-link-here.notion.site)** *(Ganti dengan tautan Notion Anda)*
+> 👉 **[Lihat Dokumentasi Lengkap di Notion]((https://bustling-bat-5ce.notion.site/Linux-SaaS-Infrastructure-Monitoring-Operations-Lab-3c6adecfe66d8097b6a4c35e3aef83e4?source=copy_link))** *(Ganti dengan tautan Notion Anda)*
 
 ---
 
@@ -483,4 +483,4 @@ This project demonstrates practical competency in:
 
 This project is open-source and available under the **MIT License**. Created as part of the **Linux SaaS Infrastructure Monitoring & Operations Lab**.
 
-> For the detailed, step-by-step implementation guide with all command logs and configuration screenshots, visit the **[Notion Implementation Guide](https://your-notion-link-here.notion.site)**.
+> For the detailed, step-by-step implementation guide with all command logs and configuration screenshots, visit the **[Notion Implementation Guide](https://bustling-bat-5ce.notion.site/Linux-SaaS-Infrastructure-Monitoring-Operations-Lab-3c6adecfe66d8097b6a4c35e3aef83e4?source=copy_link)**.
