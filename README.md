@@ -1,2215 +1,486 @@
-I analyzed the complete project configuration document, including the 16 phases, monitoring stack, backup/restore workflow, incident simulations, incident reports, operations runbook, and final E2E validation. The source establishes the project as an AWS EC2-based Linux SaaS infrastructure lab using Docker Compose, Nginx, MySQL, Prometheus, Grafana, Node Exporter, Uptime Kuma, automated backup/restore, centralized log inspection, incident simulation, and operational validation.  
+# 🚀 Linux SaaS Infrastructure Monitoring & Operations Lab
 
-I have **redacted credentials and the example Elastic IP** in the README rather than reproducing them. The source itself contains hard-coded credentials, so those should be treated as secrets and replaced with environment-specific values. 
+[![AWS EC2](https://img.shields.io/badge/AWS%20EC2-Ubuntu%2024.04%20LTS-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)](https://aws.amazon.com/ec2/)
+[![Docker Compose](https://img.shields.io/badge/Docker%20Compose-v2-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+[![Nginx](https://img.shields.io/badge/Nginx-Reverse%20Proxy-009639?style=for-the-badge&logo=nginx&logoColor=white)](https://nginx.org/)
+[![Prometheus](https://img.shields.io/badge/Prometheus-Metrics%20Engine-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)](https://prometheus.io/)
+[![Grafana](https://img.shields.io/badge/Grafana-Dashboards-F46800?style=for-the-badge&logo=grafana&logoColor=white)](https://grafana.com/)
+[![Uptime Kuma](https://img.shields.io/badge/Uptime%20Kuma-Synthetic%20Monitoring-67DA96?style=for-the-badge&logo=uptime-kuma&logoColor=white)](https://github.com/louislam/uptime-kuma)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Bash](https://img.shields.io/badge/Bash-Automation%20%26%20SRE-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
+[![Security Hardened](https://img.shields.io/badge/Security-Hardened%20(UFW%20%2B%20SSH)-green?style=for-the-badge&logo=linux&logoColor=white)](#security--hardening-summary)
 
-# Linux SaaS Infrastructure Monitoring & Operations Lab
-
-A hands-on Linux infrastructure and operations lab that provisions an AWS EC2 server, applies Linux security hardening, deploys a containerized SaaS application and MySQL database, exposes services through an Nginx reverse proxy, implements infrastructure monitoring with Prometheus and Grafana, performs synthetic availability monitoring with Uptime Kuma, automates database backup and recovery, centralizes operational log inspection, and validates incident-response procedures through controlled failure simulations.
+> A production-grade Linux infrastructure and Site Reliability Engineering (SRE) lab deployed on **AWS EC2**. Features end-to-end Linux security hardening, containerized Python/Flask SaaS architecture with MySQL, host-level Nginx reverse proxying with metric endpoint protection, full-stack observability with Prometheus, Grafana, and Node Exporter, synthetic availability checks via Uptime Kuma, automated database backup & disaster recovery, centralized log rotation & inspection, 6 controlled chaos incident simulations with post-mortems, and an automated 10-point end-to-end validation suite.
 
 ---
 
-## Overview
+> [!TIP]
+> ### 📖 Complete Step-by-Step Implementation Guide
+> Untuk panduan langkah-demi-langkah (Phase 1 s/d Phase 16) yang lengkap dengan seluruh konfigurasi, screenshot terminal/dashboard, dan catatan eksekusi command, silakan akses:
+> 
+> 👉 **[Lihat Dokumentasi Lengkap di Notion](https://your-notion-link-here.notion.site)** *(Ganti dengan tautan Notion Anda)*
 
-This project demonstrates the end-to-end operation of a small SaaS infrastructure environment on **AWS EC2**.
+---
 
-The infrastructure is intentionally designed around a single Ubuntu server and separates public-facing traffic from internal application, database, and monitoring services.
+## 📑 Table of Contents
 
-The project covers:
+- [Overview](#-overview)
+- [System Architecture](#-system-architecture)
+  - [High-Level Architecture](#high-level-architecture)
+  - [Observability & Telemetry Flow](#observability--telemetry-flow)
+  - [Network Isolation & Port Exposure Matrix](#network-isolation--port-exposure-matrix)
+- [Infrastructure Specifications](#-infrastructure-specifications)
+- [Key Engineering Highlights (16 Phases)](#-key-engineering-highlights-16-phases)
+  - [1. Cloud Infrastructure & Security Hardening](#1-cloud-infrastructure--security-hardening)
+  - [2. Containerized Microservices Stack](#2-containerized-microservices-stack)
+  - [3. Host Nginx Reverse Proxy & Routing](#3-host-nginx-reverse-proxy--routing)
+  - [4. Multi-Tier Observability & Monitoring](#4-multi-tier-observability--monitoring)
+  - [5. Automated Backup & Disaster Recovery](#5-automated-backup--disaster-recovery)
+  - [6. Centralized Logging & Network Flow Tracing](#6-centralized-logging--network-flow-tracing)
+  - [7. Chaos Engineering & Controlled Incident Simulations](#7-chaos-engineering--controlled-incident-simulations)
+  - [8. Incident Response Framework & Reports](#8-incident-response-framework--reports)
+  - [9. SRE Operations Runbook & Daily Checklist](#9-sre-operations-runbook--daily-checklist)
+  - [10. Automated End-to-End System Validation](#10-automated-end-to-end-system-validation)
+- [Repository Structure](#-repository-structure)
+- [Quick Start Guide](#-quick-start-guide)
+- [Operations Runbook & Cheat Sheet](#-operations-runbook--cheat-sheet)
+- [Security & Hardening Summary](#-security--hardening-summary)
+- [Learning Outcomes & Core Competencies](#-learning-outcomes--core-competencies)
 
-* AWS EC2 provisioning
-* Security Group configuration
-* Elastic IP association
-* Ubuntu Server hardening
-* Swap configuration
-* UFW firewall configuration
-* SSH hardening
-* Docker Engine and Docker Compose V2
-* Containerized Python SaaS application
-* MySQL database
-* Nginx reverse proxy
-* Prometheus monitoring
-* Node Exporter
-* Grafana operational dashboards
-* Uptime Kuma synthetic monitoring
-* Automated MySQL backup
-* Database disaster recovery
-* Nginx and Docker log rotation
-* Centralized log inspection
-* Docker network tracing
-* Controlled incident simulations
-* Incident response methodology
-* Incident report documentation
-* Operations troubleshooting runbook
-* End-to-end infrastructure validation
+---
 
-The source configuration uses the following logical deployment flow:
+## 🔍 Overview
+
+This lab demonstrates how to design, deploy, secure, monitor, and maintain a robust Linux SaaS server environment on **AWS EC2**. Rather than simply launching containers, this project emphasizes **operational readiness, security hardening, multi-tier observability, automated disaster recovery, and incident response**.
+
+### Core Engineering Pillars
 
 ```text
-Internet
-   |
-   | HTTP :80 / HTTPS :443
-   v
-+---------------------------+
-| AWS EC2                   |
-| Ubuntu Server 24.04 LTS   |
-|                           |
-| +-----------------------+ |
-| | Nginx Reverse Proxy   | |
-| +-----------+-----------+ |
-|             |
-|     +-------+--------+
-|     |                |
-|     v                v
-|  SaaS App          Monitoring UI
-|  :8000             /grafana/
-|                    /kuma/
-|     |
-|     v
-|  MySQL
-|  :3306 internal
-|
-| Monitoring:
-|   Node Exporter :9100
-|          |
-|          v
-|     Prometheus :9090
-|          |
-|          v
-|       Grafana
-|
-| Availability:
-|   Uptime Kuma :3001
-|
-| Backup:
-|   mysqldump -> /opt/backups
-+---------------------------+
++----------------------------------------------------------------------------------------------------+
+|                                    LINUX SAAS INFRASTRUCTURE LAB                                   |
++-----------------------------------+----------------------------------+-----------------------------+
+| 🛡️ Security & Hardening           | 📊 Full-Stack Observability      | 🔄 SRE & Operations         |
+| • 2 GB Swap (OOM Prevention)      | • Node Exporter (Host Metrics)   | • Automated MySQL Backups   |
+| • UFW Default-Deny Firewall       | • Prometheus (15s Scrapes)       | • 7-Day Backup Retention    |
+| • SSH Key-Only Auth (No Root)     | • Grafana Operational Dashboards | • Tested Disaster Recovery  |
+| • Protected /metrics (HTTP 403)   | • Uptime Kuma Synthetic Probes   | • Unified Logrotate Policy  |
+| • Internal Network Isolation      | • App Custom Request Counters    | • 10-Point Automated E2E QA |
++-----------------------------------+----------------------------------+-----------------------------+
 ```
 
-The project keeps application, database, and monitoring ports bound to localhost or internal Docker networks rather than exposing them directly through the AWS Security Group. 
-
 ---
 
-## Objectives
-
-### Infrastructure
-
-* Provision an AWS EC2 instance.
-* Configure network access through an AWS Security Group.
-* Associate an Elastic IP.
-* Establish SSH access.
-
-### Security
-
-* Configure a 2 GB swap file.
-* Configure UFW.
-* Disable SSH password authentication.
-* Disable direct root login.
-* Limit SSH authentication attempts.
-* Keep internal application and monitoring ports inaccessible from the public network.
-
-### Application
-
-* Deploy a Python/Flask SaaS application.
-* Connect the application to MySQL.
-* Expose the application through Nginx.
-
-### Monitoring
-
-* Collect host metrics with Node Exporter.
-* Collect application and host metrics with Prometheus.
-* Visualize metrics through Grafana.
-* Monitor public application availability using Uptime Kuma.
-
-### Operations
-
-* Automate MySQL backups.
-* Provide database restoration tooling.
-* Configure scheduled backups.
-* Implement log rotation.
-* Provide centralized log inspection.
-* Trace Docker network connectivity.
-* Simulate infrastructure incidents.
-* Document incident response.
-* Perform end-to-end validation.
-
----
-
-## Architecture
+## 🏗️ System Architecture
 
 ### High-Level Architecture
 
-```text
-                         Internet
-                            |
-                            v
-                 +---------------------+
-                 |   AWS Security      |
-                 |      Group          |
-                 |                    |
-                 |  SSH  :22          |
-                 |  HTTP :80          |
-                 |  HTTPS:443         |
-                 +----------+----------+
-                            |
-                            v
-                 +---------------------+
-                 | AWS EC2             |
-                 | saas-infra-node-01  |
-                 | Ubuntu 24.04 LTS    |
-                 +----------+----------+
-                            |
-                            v
-                 +---------------------+
-                 | Nginx Reverse Proxy |
-                 +----------+----------+
-                            |
-          +-----------------+------------------+
-          |                 |                  |
-          v                 v                  v
-       /                  /grafana/          /kuma/
-       |                    |                  |
-       v                    v                  v
-+-------------+      +-------------+    +-------------+
-| SaaS App    |      | Grafana     |    | Uptime Kuma |
-| :8000       |      | :3000       |    | :3001       |
-+------+------+      +------+------+    +-------------+
-       |
-       v
-+-------------+
-| MySQL :3306 |
-+-------------+
+```mermaid
+flowchart TD
+    User([🌐 Internet Traffic]) -->|TCP 80 / 443| SG[AWS Security Group<br/><code>sg-saas-lab</code>]
+    Admin([👨‍💻 SRE / Admin]) -->|TCP 22 SSH| SG
 
-Monitoring flow:
+    subgraph Host["AWS EC2: saas-infra-node-01 (Ubuntu 24.04 LTS)"]
+        SG -->|UFW Inbound Allowed| UFW{UFW Firewall}
+        
+        UFW -->|Port 22| SSHD[OpenSSH Server<br/>Key-Only / No Root]
+        UFW -->|Port 80/443| NGINX[Nginx Reverse Proxy]
 
-+--------------+       +-------------+       +----------+
-| Node Exporter| ----> | Prometheus  | ----> | Grafana  |
-| Host metrics |       | :9090       |       | Dashboard|
-+--------------+       +-------------+       +----------+
-                              ^
-                              |
-                         SaaS App
-                         /metrics
+        subgraph SystemServices["Host System Services"]
+            NODE_EXP[Node Exporter Service<br/><code>127.0.0.1:9100</code>]
+            CRON[Cron Daemon<br/>Daily Backup @ 02:00]
+            LOGROTATE[Logrotate<br/>Nginx 14-Day Rotation]
+        end
+
+        subgraph DockerCompose["Docker Compose V2 Environment"]
+            subgraph AppNet["app-network (Bridge)"]
+                APP[saas-app<br/>Python 3.11 / Flask<br/><code>127.0.0.1:8000</code>]
+                MYSQL[(mysql-db<br/>MySQL 8.0<br/><code>mysql-db:3306</code>)]
+            end
+
+            subgraph MonNet["monitoring-net (Bridge)"]
+                PROM[Prometheus Server<br/><code>127.0.0.1:9090</code>]
+                GRAFANA[Grafana Dashboard<br/><code>127.0.0.1:3000</code>]
+                KUMA[Uptime Kuma<br/><code>127.0.0.1:3001</code>]
+            end
+        end
+
+        NGINX -->|proxy_pass /| APP
+        NGINX -->|proxy_pass /grafana/| GRAFANA
+        NGINX -->|proxy_pass /kuma/ + WebSocket| KUMA
+        NGINX -->|location /metrics: 403 Forbidden| DENY[Access Denied]
+        
+        APP -->|Internal DB Query| MYSQL
+        CRON -->|mysqldump| MYSQL
+    end
+
+    classDef aws fill:#FF9900,stroke:#232F3E,stroke-width:2px,color:white;
+    classDef proxy fill:#009639,stroke:#004D1A,stroke-width:2px,color:white;
+    classDef app fill:#2496ED,stroke:#0B4F8A,stroke-width:2px,color:white;
+    classDef db fill:#4479A1,stroke:#1A3E5C,stroke-width:2px,color:white;
+    classDef mon fill:#E6522C,stroke:#8A240B,stroke-width:2px,color:white;
+
+    class SG,Host aws;
+    class NGINX proxy;
+    class APP app;
+    class MYSQL db;
+    class PROM,GRAFANA,KUMA,NODE_EXP mon;
 ```
 
----
+### Observability & Telemetry Flow
 
-## Architecture Components
+```mermaid
+flowchart LR
+    subgraph Exporters["Telemetry Sources"]
+        NE[Node Exporter<br/><code>Host CPU, RAM, Disk, Net</code>]
+        APP_M[SaaS App <code>/metrics</code><br/><code>Request Counters & Latency</code>]
+        SYNTH[Uptime Kuma<br/><code>20s HTTP Availability Probes</code>]
+    end
 
-| Component               | Role                                                 |
-| ----------------------- | ---------------------------------------------------- |
-| AWS EC2                 | Hosts the infrastructure                             |
-| Ubuntu Server 24.04 LTS | Operating system                                     |
-| AWS Security Group      | Cloud-level network access control                   |
-| Elastic IP              | Stable public IP address                             |
-| UFW                     | Host-level firewall                                  |
-| OpenSSH                 | Remote administration                                |
-| Docker Engine           | Container runtime                                    |
-| Docker Compose V2       | Container orchestration                              |
-| Python 3.11             | Application runtime                                  |
-| Flask                   | SaaS application framework                           |
-| Gunicorn                | Application WSGI server                              |
-| MySQL 8.0               | Database                                             |
-| Nginx                   | Reverse proxy                                        |
-| Node Exporter           | Host metrics exporter                                |
-| Prometheus              | Metrics collection                                   |
-| Grafana                 | Metrics visualization                                |
-| Uptime Kuma             | Synthetic availability monitoring                    |
-| Bash                    | Backup, restore, validation, and operational scripts |
-| Cron                    | Scheduled database backups                           |
-| Logrotate               | Log retention and rotation                           |
+    subgraph Collection["Metrics Engine"]
+        PROM[Prometheus Time-Series DB<br/><code>15s Scrape Interval</code>]
+    end
 
----
+    subgraph Visualization["Dashboards & Alerts"]
+        GRAF[Grafana Visualization<br/><code>Node Exporter Full (ID: 1860)</code>]
+        KUMA_UI[Uptime Kuma Status Page<br/><code>Real-Time Heartbeat Grid</code>]
+    end
 
-## Infrastructure Specifications
+    NE -->|Scrape :9100| PROM
+    APP_M -->|Scrape :8000| PROM
+    PROM -->|Data Source Query| GRAF
+    SYNTH -->|HTTP Checks| KUMA_UI
+```
 
-The documented EC2 configuration is:
+### Network Isolation & Port Exposure Matrix
 
-| Resource      | Configuration           |
-| ------------- | ----------------------- |
-| Instance name | `saas-infra-node-01`    |
-| OS            | Ubuntu Server 24.04 LTS |
-| Architecture  | 64-bit x86              |
-| Instance type | `t3.small`              |
-| CPU           | 2 vCPU                  |
-| RAM           | 2 GB                    |
-| Root volume   | 20 GB gp3               |
-| Public IP     | Elastic IP              |
-| SSH user      | `ubuntu`                |
+To enforce a strict **Zero-Trust & Defense-in-Depth** model, only required ports are exposed to the public Internet, while internal backend databases and observability endpoints are bound exclusively to `127.0.0.1` or internal Docker networks:
 
-The documentation also notes that a 1 GB RAM instance requires a 2 GB swap file when running Docker, MySQL, and Prometheus together. 
+| Port | Protocol | Service | Binding / Network | AWS SG | UFW | Public Route | Purpose / Security Posture |
+| :--- | :--- | :--- | :--- | :---: | :---: | :--- | :--- |
+| **22** | TCP | OpenSSH | Host `0.0.0.0:22` | ✅ Allowed | ✅ Allowed | Direct SSH | Key-based authentication only, root login disabled |
+| **80** | TCP | Nginx HTTP | Host `0.0.0.0:80` | ✅ Allowed | ✅ Allowed | `http://<IP>/` | Main public web ingress point |
+| **443** | TCP | Nginx HTTPS | Host `0.0.0.0:443` | ✅ Allowed | ✅ Allowed | `https://<IP>/` | Encrypted SSL/TLS traffic ingress |
+| **8000** | TCP | SaaS App | Localhost `127.0.0.1:8000` | ❌ Denied | ❌ Blocked | Via Nginx `/` | Python WSGI application container |
+| **3306** | TCP | MySQL DB | Docker `app-network` only | ❌ Denied | ❌ Blocked | None (Internal) | Isolated relational database storage |
+| **9100** | TCP | Node Exporter | Localhost `127.0.0.1:9100` | ❌ Denied | ❌ Blocked | None (Internal) | Host metrics collector systemd service |
+| **9090** | TCP | Prometheus | Localhost `127.0.0.1:9090` | ❌ Denied | ❌ Blocked | None (Internal) | Time-series metrics collection engine |
+| **3000** | TCP | Grafana | Localhost `127.0.0.1:3000` | ❌ Denied | ❌ Blocked | Via Nginx `/grafana/` | Operational metric dashboards (Auth protected) |
+| **3001** | TCP | Uptime Kuma | Localhost `127.0.0.1:3001` | ❌ Denied | ❌ Blocked | Via Nginx `/kuma/` | Synthetic availability monitoring & WebSocket UI |
+| **-** | HTTP | App `/metrics` | Internal `saas-app:8000` | - | - | 🚫 **HTTP 403** | Explicitly blocked at Nginx to prevent metric leakage |
 
 ---
 
-## Network and Port Design
+## 💻 Infrastructure Specifications
 
-### AWS Security Group
-
-Only the following inbound ports are intended to be publicly accessible:
-
-| Port | Protocol | Source            | Purpose |
-| ---: | -------- | ----------------- | ------- |
-|   22 | TCP      | My IP recommended | SSH     |
-|   80 | TCP      | `0.0.0.0/0`       | HTTP    |
-|  443 | TCP      | `0.0.0.0/0`       | HTTPS   |
-
-The documentation explicitly states that internal ports such as `3306`, `8000`, `9090`, `3000`, and `3001` should not be opened in the AWS Security Group. 
-
-### Internal Services
-
-| Service          | Port | Exposure                   |
-| ---------------- | ---: | -------------------------- |
-| SaaS application | 8000 | Host localhost             |
-| Prometheus       | 9090 | Host localhost             |
-| Grafana          | 3000 | Host localhost             |
-| Uptime Kuma      | 3001 | Host localhost             |
-| Node Exporter    | 9100 | Host localhost             |
-| MySQL            | 3306 | Docker application network |
-
-This design allows Nginx to act as the public entry point while the application and monitoring services remain behind the reverse proxy.
+| Parameter | Configuration | Engineering Rationale |
+| :--- | :--- | :--- |
+| **Cloud Provider** | Amazon Web Services (AWS) | Cloud infrastructure provisioning |
+| **Compute Instance** | Amazon EC2 `t3.small` (2 vCPU, 2 GB RAM) | Supports multi-container Docker & monitoring stack |
+| **Free-Tier Fallback** | `t2.micro` / `t3.micro` (1 GB RAM) | Validated with 2 GB Swap allocation |
+| **Operating System** | Ubuntu Server 24.04 LTS (Noble Numbat) x86_64 | Modern LTS Linux kernel with systemd support |
+| **Virtual Memory** | **2.0 GB Swap File** (`/swapfile`) | Mitigates Linux OOM (Out-of-Memory) Killer |
+| **Storage (EBS)** | 20 GB gp3 General Purpose SSD | High IOPS baseline for MySQL & Prometheus TSDB |
+| **Networking** | Elastic IP (EIP) associated | Static public IP address across reboots |
+| **Firewall** | Dual Layer: AWS Security Group + Host UFW | Defense-in-depth perimeter & OS protection |
 
 ---
 
-# Deployment
+## ⚡ Key Engineering Highlights (16 Phases)
 
-## Phase 1 — AWS EC2 Provisioning & Networking
-
-### 1. Create the Security Group
-
-Create:
+The lab implementation covers **16 structured operational phases** grouped into 6 core domains:
 
 ```text
-sg-saas-lab
-```
-
-Configure inbound rules:
-
-```text
-SSH     TCP 22   My IP
-HTTP    TCP 80   0.0.0.0/0
-HTTPS   TCP 443  0.0.0.0/0
-```
-
-Keep outbound access at the documented default so the server can download packages and Docker images. 
-
-### 2. Launch EC2
-
-Use:
-
-```text
-Name:          saas-infra-node-01
-AMI:           Ubuntu Server 24.04 LTS
-Instance:      t3.small
-Storage:       20 GB gp3
-Public IP:     Enabled
-Security Group: sg-saas-lab
-```
-
-### 3. Associate Elastic IP
-
-Allocate an Elastic IP from the Amazon IPv4 pool and associate it with:
-
-```text
-saas-infra-node-01
-```
-
-Store the resulting address as:
-
-```text
-YOUR_EC2_IP
-```
-
-The Elastic IP provides a stable address for public access after server restarts. 
-
-### 4. Test SSH
-
-On the local machine:
-
-```bash
-chmod 400 /path/to/your-key.pem
-
-ssh -i /path/to/your-key.pem ubuntu@YOUR_EC2_IP
-```
-
----
-
-# Phase 2 — Ubuntu Server Hardening
-
-## 1. Configure 2 GB Swap
-
-```bash
-sudo fallocate -l 2G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-
-free -h
-```
-
-Verify that the `Swap` row reports approximately:
-
-```text
-2.0Gi
-```
-
-The swap configuration is intended to reduce the risk of OOM conditions while multiple infrastructure services are running. 
-
----
-
-## 2. Configure UFW
-
-Set the default policies:
-
-```bash
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-```
-
-Allow the public services:
-
-```bash
-sudo ufw allow 22/tcp comment 'SSH Port'
-sudo ufw allow 80/tcp comment 'HTTP Nginx'
-sudo ufw allow 443/tcp comment 'HTTPS Nginx'
-```
-
-Enable and verify:
-
-```bash
-sudo ufw enable
-sudo ufw status verbose
-```
-
----
-
-## 3. Harden SSH
-
-Create the custom configuration:
-
-```bash
-sudo mkdir -p /etc/ssh/sshd_config.d/
-```
-
-Create:
-
-```text
-/etc/ssh/sshd_config.d/hardening.conf
-```
-
-with:
-
-```text
-PermitRootLogin no
-PasswordAuthentication no
-X11Forwarding no
-MaxAuthTries 3
-```
-
-Validate before restarting SSH:
-
-```bash
-sudo sshd -t
-```
-
-Then:
-
-```bash
-sudo systemctl restart ssh
-```
-
-**Important:** Keep the existing SSH session open until a new SSH session has been successfully tested. 
-
----
-
-# Phase 3 — Validation After Hardening
-
-Open a new terminal and verify SSH access:
-
-```bash
-ssh -i /path/to/your-key.pem ubuntu@YOUR_EC2_IP
-```
-
-Do not close the original session until the new connection is confirmed.
-
----
-
-# Phase 4 — Docker Engine & Docker Compose V2
-
-Install dependencies:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl gnupg
-```
-
-Configure the Docker keyring:
-
-```bash
-sudo install -m 0755 -d /etc/apt/keyrings
-
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
-  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
-```
-
-Add the Docker repository:
-
-```bash
-echo \
-  "deb [arch=\"$(dpkg --print-architecture)\" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  \"$(. /etc/os-release && echo "$VERSION_CODENAME")\" stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-```
-
-Install Docker:
-
-```bash
-sudo apt-get update
-
-sudo apt-get install -y \
-  docker-ce \
-  docker-ce-cli \
-  containerd.io \
-  docker-buildx-plugin \
-  docker-compose-plugin
-```
-
-Allow the `ubuntu` user to execute Docker without `sudo`:
-
-```bash
-sudo usermod -aG docker ubuntu
-newgrp docker
-```
-
-Verify:
-
-```bash
-docker --version
-docker compose version
-```
-
----
-
-# Phase 5 — SaaS Application & MySQL
-
-Create the project directory:
-
-```bash
-mkdir -p ~/linux-saas-infrastructure-lab/docker
-cd ~/linux-saas-infrastructure-lab/docker
-```
-
-## Environment Configuration
-
-Create `.env`:
-
-```env
-DB_ROOT_PASSWORD=<YOUR_DB_ROOT_PASSWORD>
-DB_NAME=saasdb
-DB_USER=saasuser
-DB_PASSWORD=<YOUR_DB_PASSWORD>
-```
-
-Do not commit `.env` to a public repository.
-
----
-
-## Docker Compose Architecture
-
-The stack contains:
-
-```text
-saas-app
-mysql-db
-prometheus
-grafana
-node-exporter
-uptime-kuma
-```
-
-The application and MySQL use `app-network`.
-
-Monitoring services use `monitoring-net`.
-
-The application connects to MySQL using the Docker DNS hostname:
-
-```text
-mysql-db
-```
-
-The application exposes:
-
-```text
-127.0.0.1:8000 -> container:8000
-```
-
-Prometheus:
-
-```text
-127.0.0.1:9090 -> container:9090
-```
-
-Grafana:
-
-```text
-127.0.0.1:3000 -> container:3000
-```
-
-Uptime Kuma:
-
-```text
-127.0.0.1:3001 -> container:3001
-```
-
-The application provides:
-
-```text
-GET /
-GET /metrics
-```
-
-The `/` endpoint returns:
-
-```text
-SaaS Application Running Successfully!
-```
-
-The `/metrics` endpoint exposes Prometheus metrics, including the application request counter. 
-
-### Deploy
-
-```bash
-docker compose up -d
-```
-
-### Verify
-
-```bash
-docker compose ps
-```
-
-Test the application:
-
-```bash
-curl http://127.0.0.1:8000
-```
-
-Expected response:
-
-```text
-SaaS Application Running Successfully!
-```
-
-Test metrics:
-
-```bash
-curl http://127.0.0.1:8000/metrics
-```
-
-Test the application-to-database connection:
-
-```bash
-docker exec -it saas-app python -c "
-import mysql.connector
-conn = mysql.connector.connect(
-    host='mysql-db',
-    user='saasuser',
-    password='<YOUR_DB_PASSWORD>',
-    database='saasdb'
-)
-print('Database Connection Successful!')
-"
-```
-
----
-
-# Phase 6 — Nginx Reverse Proxy
-
-Install Nginx:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y nginx
-
-sudo systemctl enable nginx
-sudo systemctl start nginx
-
-sudo systemctl status nginx --no-pager
-```
-
-Remove the default site:
-
-```bash
-sudo rm -f /etc/nginx/sites-enabled/default
-```
-
-Create:
-
-```text
-/etc/nginx/sites-available/saas-app.conf
-```
-
-The primary routing model is:
-
-```text
-Internet
-   |
-   v
-Nginx :80
-   |
-   v
-127.0.0.1:8000
-   |
-   v
-SaaS App
-```
-
-The main application route uses:
-
-```nginx
-location / {
-    proxy_pass http://127.0.0.1:8000;
-}
-```
-
-The `/metrics` endpoint is explicitly denied:
-
-```nginx
-location /metrics {
-    deny all;
-    return 403;
-}
-```
-
-Validate before reload:
-
-```bash
-sudo nginx -t
-```
-
-Then:
-
-```bash
-sudo systemctl reload nginx
-```
-
-Test locally:
-
-```bash
-curl -I http://127.0.0.1
-curl -I http://127.0.0.1/metrics
-```
-
-The application should be reachable through:
-
-```text
-http://YOUR_EC2_IP
-```
-
-The expected application response is:
-
-```text
-SaaS Application Running Successfully!
-```
-
-The reverse-proxy and `/metrics` protection configuration are documented in the source. 
-
----
-
-# Phase 7 — Node Exporter & Prometheus
-
-## Node Exporter
-
-Create a dedicated system user:
-
-```bash
-sudo useradd --no-create-home --shell /bin/false node_exporter
-```
-
-Download the documented Node Exporter release:
-
-```bash
-cd /tmp
-
-curl -LO https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
-
-tar xvf node_exporter-1.8.2.linux-amd64.tar.gz
-```
-
-Install the binary:
-
-```bash
-sudo cp node_exporter-1.8.2.linux-amd64/node_exporter /usr/local/bin
-
-sudo chown node_exporter:node_exporter /usr/local/bin/node_exporter
-```
-
-Create:
-
-```text
-/etc/systemd/system/node_exporter.service
-```
-
-with:
-
-```ini
-[Unit]
-Description=Node Exporter
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-User=node_exporter
-Group=node_exporter
-Type=simple
-ExecStart=/usr/local/bin/node_exporter --web.listen-address=127.0.0.1:9100
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable and start:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable node_exporter
-sudo systemctl start node_exporter
-```
-
-Verify:
-
-```bash
-curl -s http://127.0.0.1:9100/metrics | head -n 10
-```
-
-The documented Node Exporter configuration binds it to localhost on port `9100`. 
-
----
-
-## Prometheus Configuration
-
-Create:
-
-```text
-~/linux-saas-infrastructure-lab/docker/monitoring/prometheus
-```
-
-Then create:
-
-```text
-prometheus.yml
-```
-
-with:
-
-```yaml
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['node-exporter:9100']
-
-  - job_name: 'saas-app'
-    static_configs:
-      - targets: ['saas-app:8000']
-```
-
-Prometheus therefore monitors:
-
-```text
-node-exporter:9100
-saas-app:8000
-```
-
-The documented scrape interval is 15 seconds. 
-
-Deploy:
-
-```bash
-cd ~/linux-saas-infrastructure-lab/docker
-docker compose up -d
-```
-
-Verify:
-
-```bash
-docker compose ps prometheus
-
-curl -s http://127.0.0.1:9090/api/v1/targets \
-  | grep -E '"job"|"health"'
-```
-
-Expected target health:
-
-```text
-"health": "up"
-```
-
-for:
-
-```text
-node-exporter
-saas-app
-```
-
----
-
-# Phase 8 — Grafana Operational Dashboard
-
-Grafana runs on:
-
-```text
-127.0.0.1:3000
-```
-
-and is exposed publicly through:
-
-```text
-/grafana/
-```
-
-The Grafana container is configured for sub-path operation.
-
-Access:
-
-```text
-http://YOUR_EC2_IP/grafana/
-```
-
-The source uses an initial administrative account. For a repository README, credentials are intentionally represented as placeholders rather than stored values.
-
----
-
-## Add Prometheus Data Source
-
-Inside Grafana:
-
-1. Open **Connections**.
-2. Select **Data sources**.
-3. Select **Add data source**.
-4. Choose **Prometheus**.
-5. Use the Docker-internal Prometheus URL:
-
-```text
-http://prometheus:9090
-```
-
-6. Select **Save & test**.
-
-The expected result is:
-
-```text
-Data source is working
-```
-
-The documented Grafana configuration uses the internal Docker DNS name to communicate with Prometheus. 
-
----
-
-## Import Host Dashboard
-
-The source documents importing:
-
-```text
-Dashboard ID: 1860
-```
-
-using Prometheus as the data source.
-
-This provides the documented Node Exporter host metrics dashboard.
-
----
-
-# Phase 9 — Uptime Kuma Synthetic Monitoring
-
-Uptime Kuma provides an availability-oriented monitoring layer separate from Prometheus metrics.
-
-The intended public route is:
-
-```text
-/kuma/
-```
-
-The container listens on:
-
-```text
-127.0.0.1:3001
-```
-
----
-
-## Nginx Routing
-
-Uptime Kuma requires WebSocket support.
-
-The documented Nginx configuration includes:
-
-```nginx
-location /kuma/ {
-    proxy_pass http://127.0.0.1:3001;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-```
-
-Additional routes are handled for Uptime Kuma assets and WebSocket/API traffic to prevent blank-page behavior. 
-
-Validate and reload:
-
-```bash
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-Access:
-
-```text
-http://YOUR_EC2_IP/kuma/
-```
-
----
-
-## Configure the Monitor
-
-Create the first Uptime Kuma administrator.
-
-Then create an HTTP monitor:
-
-```text
-Monitor Type:       HTTP(s)
-Friendly Name:     SaaS App Public Health
-Heartbeat Interval: 20 seconds
-```
-
-The monitored URL can use the local application endpoint or the public application endpoint according to the documented configuration. 
-
----
-
-# Phase 10 — Automated Backup & Disaster Recovery
-
-The backup architecture consists of:
-
-```text
-MySQL Container
-      |
-      v
-mysqldump
-      |
-      v
-/opt/backups
-      |
-      v
-.tar.gz
-      |
-      v
-7-day retention
-```
-
----
-
-## Backup Directory
-
-```bash
-sudo mkdir -p /opt/backups
-sudo chown ubuntu:ubuntu /opt/backups
-```
-
----
-
-## Backup Script
-
-Create:
-
-```text
-~/linux-saas-infrastructure-lab/backup/backup-mysql.sh
-```
-
-The script:
-
-1. Executes `mysqldump` inside the MySQL container.
-2. Writes the SQL backup to `/opt/backups`.
-3. Compresses the backup.
-4. Removes the uncompressed SQL file.
-5. Deletes archives older than seven days.
-
-Use environment-specific credentials rather than hard-coded secrets.
-
-The documented backup retention policy is seven days. 
-
-Make executable:
-
-```bash
-chmod +x ~/linux-saas-infrastructure-lab/backup/backup-mysql.sh
-```
-
----
-
-## Restore Script
-
-Create:
-
-```text
-~/linux-saas-infrastructure-lab/backup/restore-mysql.sh
-```
-
-The restore workflow:
-
-```text
-.tar.gz backup
-      |
-      v
-Temporary directory
-      |
-      v
-SQL file
-      |
-      v
-MySQL container
-```
-
-The script expects the backup path as its first argument:
-
-```bash
-./restore-mysql.sh /path/to/backup_file.tar.gz
-```
-
-The source restores the SQL dump into the MySQL database and removes the temporary extraction directory afterward. 
-
----
-
-## Scheduled Backup
-
-The documented cron schedule runs the backup every day at:
-
-```text
-02:00
-```
-
-The configured cron pattern is:
-
-```cron
-0 2 * * *
-```
-
-Verify:
-
-```bash
-crontab -l
-```
-
----
-
-## Disaster Recovery Verification
-
-Run an initial backup:
-
-```bash
-~/linux-saas-infrastructure-lab/backup/backup-mysql.sh
-```
-
-Verify:
-
-```bash
-ls -lh /opt/backups/
-```
-
-Perform the documented controlled database test.
-
-Then locate the latest backup:
-
-```bash
-LATEST_BACKUP=$(ls -t /opt/backups/*.tar.gz | head -n 1)
-```
-
-Restore:
-
-```bash
-~/linux-saas-infrastructure-lab/backup/restore-mysql.sh ${LATEST_BACKUP}
-```
-
-The project explicitly includes disaster recovery verification rather than merely creating backups. 
-
----
-
-# Phase 11 — Observability, Centralized Logging & Network Flow Analysis
-
-## Nginx Log Rotation
-
-Create:
-
-```text
-/etc/logrotate.d/nginx-saas
-```
-
-The documented policy:
-
-```text
-daily
-14 rotations
-compression enabled
-delayed compression
-```
-
-Nginx logs are rotated from:
-
-```text
-/var/log/nginx/saas_access.log
-/var/log/nginx/saas_error.log
-```
-
----
-
-## Docker Log Limits
-
-Configure Docker's daemon logging:
-
-```json
-{
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
+  PHASE 01-03 ───► Cloud Infrastructure, Networking & Linux Security Hardening
+  PHASE 04-06 ───► Docker Compose Microservices & Nginx Reverse Proxy Routing
+  PHASE 07-09 ───► Full-Stack Telemetry (Node Exporter, Prometheus, Grafana, Uptime Kuma)
+  PHASE 10-11 ───► Automated Backups, Tested Disaster Recovery & Centralized Logging
+  PHASE 12-14 ───► Chaos Incident Simulations (INC-001 to INC-006) & Response Lifecycle
+  PHASE 15-16 ───► SRE Troubleshooting Runbook & Automated 10-Point E2E Validation
+```
+
+### 1. Cloud Infrastructure & Security Hardening
+* **AWS EC2 & Elastic IP**: Provisioned Ubuntu 24.04 LTS with a dedicated security group `sg-saas-lab` and Elastic IP association.
+* **2 GB Swap Allocation**: Formatted and permanently mounted a 2 GB swapfile in `/etc/fstab` with `chmod 600` to prevent OOM process termination under combined Docker, DB, and monitoring workloads.
+* **UFW Host Firewall**: Configured strict default-deny inbound rules with granular allowances for SSH (22), HTTP (80), and HTTPS (443).
+* **SSH Hardening**: Enforced key-only authentication by creating `/etc/ssh/sshd_config.d/hardening.conf` with:
+  ```ini
+  PermitRootLogin no
+  PasswordAuthentication no
+  X11Forwarding no
+  MaxAuthTries 3
+  ```
+
+### 2. Containerized Microservices Stack
+* **Docker Engine & Docker Compose V2**: Configured the official Docker apt repository, keyring verification, and non-root `docker` user group privileges.
+* **Python SaaS Application**: Containerized lightweight Flask application exposing home route `/` and Prometheus `/metrics` route via Gunicorn WSGI server.
+* **Database Isolation**: Deployed MySQL 8.0 with persistent named volumes (`mysql_data`) and separated internal network (`app-network`). Credentials managed via `.env` file.
+
+### 3. Host Nginx Reverse Proxy & Routing
+* **Unified Gateway**: Configured host-level Nginx as the single entrypoint on port 80 routing to:
+  * Application: `proxy_pass http://127.0.0.1:8000;`
+  * Grafana Dashboard: `proxy_pass http://127.0.0.1:3000;` at `/grafana/`
+  * Uptime Kuma: `proxy_pass http://127.0.0.1:3001;` at `/kuma/` with full WebSocket header support (`Upgrade $http_upgrade`, `Connection "upgrade"`).
+* **Information Leakage Protection**: Implemented an explicit denial rule for the internal `/metrics` endpoint:
+  ```nginx
+  location /metrics {
+      deny all;
+      return 403;
   }
-}
-```
+  ```
 
-Reload Docker:
+### 4. Multi-Tier Observability & Monitoring
+* **Host Metrics**: Node Exporter v1.8.2 installed as a systemd service listening strictly on `127.0.0.1:9100`.
+* **Metrics Ingestion**: Prometheus scraping Node Exporter and SaaS App metrics at a 15-second scrape interval.
+* **Dashboards**: Grafana deployed with pre-configured subpath routing (`GF_SERVER_SERVE_FROM_SUB_PATH=true`), linked to Prometheus via internal Docker DNS (`http://prometheus:9090`), and provisioned with the official **Node Exporter Full Dashboard (ID: 1860)**.
+* **Synthetic Availability**: Uptime Kuma monitoring the SaaS App HTTP endpoint with 20-second heartbeat probes.
 
-```bash
-sudo systemctl reload docker
-```
+### 5. Automated Backup & Disaster Recovery
+* **Automated Backup Script** ([`backup-mysql.sh`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/backup/backup-mysql.sh)): Executes `mysqldump` within the running container, compresses into `.tar.gz`, stores in `/opt/backups`, and enforces a **7-day retention policy**.
+* **Disaster Recovery Script** ([`restore-mysql.sh`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/backup/restore-mysql.sh)): Extracts the target archive into a temporary folder and restores the SQL dump directly into the container.
+* **Scheduled Cron Execution**: Automated daily execution at 02:00 AM (`0 2 * * *`).
+* **DR Drill Verification**: Successfully executed live disaster simulation by dropping database tables and verifying 100% data recovery from the latest archive.
 
-The purpose is to prevent uncontrolled container log growth from consuming disk space. 
+### 6. Centralized Logging & Network Flow Tracing
+* **Log Rotation**: Implemented `/etc/logrotate.d/nginx-saas` for daily Nginx log compression with 14-day retention.
+* **Container Log Caps**: Enforced global Docker daemon log restrictions in `/etc/docker/daemon.json` (`max-size: 10m`, `max-file: 3`) to prevent uncontrolled disk exhaustion.
+* **Interactive Log Viewer** ([`inspect-logs.sh`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/docs/inspect-logs.sh)): Terminal utility to stream live Nginx access/error logs, container stdout/stderr, and UFW kernel drops.
+* **Network Flow Tracing**: Validated Docker internal DNS resolution (`ping mysql-db`) and intra-container Prometheus scraping (`wget http://saas-app:8000/metrics`).
 
----
+### 7. Chaos Engineering & Controlled Incident Simulations
+To validate monitoring alerts and operational recovery, 6 realistic failure scenarios were simulated:
 
-## Centralized Log Inspection
+| Incident ID | Incident Name | Severity | Simulated Root Cause | Detection Indicator | Recovery Procedure |
+| :--- | :--- | :---: | :--- | :--- | :--- |
+| **INC-001** | Nginx Web Server Outage | **P1 (Critical)** | `systemctl stop nginx` | Uptime Kuma DOWN alert, `ERR_CONNECTION_REFUSED` | `systemctl start nginx` |
+| **INC-002** | Application Container Crash | **P2 (High)** | `docker stop saas-app` | Nginx HTTP 502 Bad Gateway, Prometheus target DOWN | `docker start saas-app` |
+| **INC-003** | MySQL Database Disruption | **P2 (High)** | `docker stop mysql-db` | Application DB connection timeout / refused | `docker start mysql-db` / DR Restore |
+| **INC-004** | Sustained High CPU Load | **P3 (Medium)** | `stress-ng --cpu 2 --timeout 60s` | Grafana CPU spike to ~100%, high load metric | `killall stress-ng` |
+| **INC-005** | Disk Storage Depletion | **P1 (Critical)** | `fallocate -l 5G /tmp/dummy.img` | Grafana disk available metric < 5% | `rm /tmp/dummy.img`, logrotate |
+| **INC-006** | Nginx Misconfiguration | **P2 (High)** | Invalid upstream port in Nginx config | Nginx HTTP 502 Bad Gateway, error log upstream refused | Fix upstream port, `nginx -t`, reload |
 
-The project includes:
-
+### 8. Incident Response Framework & Reports
+All incidents are processed through the standard **5-Stage Incident Lifecycle**:
 ```text
-docs/inspect-logs.sh
+  [ 1. DETECTION ] ──► [ 2. CONTAINMENT ] ──► [ 3. RCA & INVESTIGATION ] ──► [ 4. REMEDIATION ] ──► [ 5. POST-MORTEM ]
 ```
+Detailed incident post-mortem reports are documented in the [`incidents/`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/incidents) directory:
+* [`INC-001-nginx-down.md`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/incidents/INC-001-nginx-down.md)
+* [`INC-002-application-down.md`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/incidents/INC-002-application-down.md)
+* [`INC-003-database-failure.md`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/incidents/INC-003-database-failure.md)
+* [`INC-004-high-cpu.md`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/incidents/INC-004-high-cpu.md)
+* [`INC-005-disk-full.md`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/incidents/INC-005-disk-full.md)
+* [`INC-006-nginx-proxy.md`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/incidents/INC-006-nginx-proxy.md)
 
-It provides an interactive menu for:
+### 9. SRE Operations Runbook & Daily Checklist
+Documented daily health checks, triage commands, and emergency disaster recovery workflows in [`docs/troubleshooting-guide.md`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/docs/troubleshooting-guide.md).
 
-```text
-1. Nginx access logs
-2. Nginx error logs
-3. SaaS application logs
-4. MySQL logs
-5. UFW dropped packets
-```
-
-Make executable:
-
-```bash
-chmod +x ~/linux-saas-infrastructure-lab/docs/inspect-logs.sh
-```
+### 10. Automated End-to-End System Validation
+Developed [`docs/e2e-validation.sh`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/docs/e2e-validation.sh) to execute a comprehensive 10-point automated health inspection across OS, security, containers, reverse proxy, metrics, and backups.
 
 ---
 
-## Docker Network Tracing
+## 🧪 Automated End-to-End System Validation
 
-Inspect the application network:
-
-```bash
-docker network inspect docker_app-network | grep -A 5 "Containers"
-```
-
-Test application-to-MySQL DNS resolution:
-
-```bash
-docker exec -it saas-app ping -c 3 mysql-db
-```
-
-Test application metrics from the Prometheus container:
-
-```bash
-docker exec -it prometheus \
-  wget -qO- http://saas-app:8000/metrics | head -n 10
-```
-
-These tests validate Docker network isolation and inter-container communication. 
-
----
-
-# Phase 12 — Controlled Incident Simulations
-
-The project intentionally introduces six controlled incidents to validate monitoring and recovery workflows.
-
-All scenarios are intended to be controlled and recoverable.
-
----
-
-## INC-001 — Nginx Service Outage
-
-### Trigger
-
-```bash
-sudo systemctl stop nginx
-```
-
-### Expected impact
-
-```text
-Public application becomes unreachable.
-Uptime Kuma reports DOWN.
-```
-
-### Recovery
-
-```bash
-sudo systemctl start nginx
-```
-
----
-
-## INC-002 — Application Container Crash
-
-### Trigger
-
-```bash
-docker stop saas-app
-```
-
-### Expected impact
-
-```text
-Nginx returns 502 Bad Gateway.
-Prometheus reports the saas-app target as DOWN.
-```
-
-### Recovery
-
-```bash
-docker start saas-app
-```
-
----
-
-## INC-003 — MySQL Service Interruption
-
-### Trigger
-
-```bash
-docker stop mysql-db
-```
-
-### Test connectivity:
-
-```bash
-docker exec -it saas-app python -c "
-import mysql.connector
-mysql.connector.connect(
-    host='mysql-db',
-    user='saasuser',
-    password='<YOUR_DB_PASSWORD>'
-)
-"
-```
-
-### Recovery
-
-```bash
-docker start mysql-db
-```
-
-The source documents this as a controlled database interruption scenario. 
-
----
-
-## INC-004 — High CPU Utilization
-
-Install the test tool:
-
-```bash
-sudo apt-get install -y stress-ng
-```
-
-Run the controlled workload:
-
-```bash
-stress-ng --cpu 2 --timeout 60s &
-```
-
-Observe:
-
-```bash
-top -b -n 1 | head -n 12
-```
-
-The expected effect is a significant CPU spike visible in Grafana.
-
-The process automatically stops after 60 seconds, or it can be terminated manually:
-
-```bash
-sudo killall stress-ng
-```
-
----
-
-## INC-005 — Disk Space Depletion
-
-Create the controlled dummy file:
-
-```bash
-fallocate -l 5G /tmp/dummy_large_file.img
-```
-
-Check disk utilization:
-
-```bash
-df -h /
-```
-
-Remove the test file:
-
-```bash
-rm -f /tmp/dummy_large_file.img
-```
-
-This scenario tests whether the monitoring stack detects significant storage depletion. 
-
----
-
-## INC-006 — Nginx Routing Error
-
-The source simulates a wrong upstream port:
-
-```bash
-sudo sed -i \
-  's/127.0.0.1:8000/127.0.0.1:8001/g' \
-  /etc/nginx/sites-available/saas-app.conf
-
-sudo systemctl reload nginx
-```
-
-Expected result:
-
-```text
-HTTP 502 Bad Gateway
-```
-
-Inspect the error log:
-
-```bash
-sudo tail -n 5 /var/log/nginx/saas_error.log
-```
-
-Restore the correct upstream:
-
-```bash
-sudo sed -i \
-  's/127.0.0.1:8001/127.0.0.1:8000/g' \
-  /etc/nginx/sites-available/saas-app.conf
-
-sudo systemctl reload nginx
-```
-
----
-
-# Phase 13 — Incident Response Methodology
-
-Each incident follows a five-stage lifecycle.
-
-## 1. Detection
-
-Identify the abnormal condition through:
-
-* Uptime Kuma
-* Grafana
-* Prometheus
-* HTTP status codes
-* System metrics
-
-## 2. Containment
-
-Prevent the problem from spreading or causing additional impact.
-
-## 3. Investigation & Root Cause Analysis
-
-Investigate:
-
-```text
-system logs
-journalctl
-docker logs
-dmesg
-Nginx logs
-configuration changes
-```
-
-## 4. Remediation & Recovery
-
-Restore service through actions such as:
-
-```text
-restart service
-restart container
-rollback configuration
-restore database
-free disk space
-```
-
-## 5. Post-Mortem & Prevention
-
-Document:
-
-* What happened
-* Why it happened
-* How it was detected
-* How it was recovered
-* How recurrence can be prevented
-
-This five-stage methodology is explicitly defined in the project source. 
-
----
-
-# Phase 14 — Incident Reports
-
-The project generates six incident reports under:
-
-```text
-incidents/
-```
-
-Expected files:
-
-```text
-incidents/
-├── INC-001-nginx-down.md
-├── INC-002-application-down.md
-├── INC-003-database-failure.md
-├── INC-004-high-cpu.md
-├── INC-005-disk-full.md
-└── INC-006-nginx-proxy.md
-```
-
-Each report documents:
-
-* Date/time
-* Severity
-* Impact
-* Symptom
-* Root cause
-* Detection/investigation
-* Remediation/recovery
-* Prevention
-
-The documented incidents range from Nginx outage and application failure to database interruption, CPU exhaustion, disk exhaustion, and Nginx misrouting. 
-
----
-
-# Phase 15 — Operations Runbook
-
-The project includes:
-
-```text
-docs/troubleshooting-guide.md
-```
-
-## Daily Health Checks
-
-Check Docker:
-
-```bash
-docker compose ps
-```
-
-Check Nginx:
-
-```bash
-sudo systemctl status nginx
-```
-
-Check memory and swap:
-
-```bash
-free -h
-```
-
-Check disk:
-
-```bash
-df -h /
-```
-
-Check UFW:
-
-```bash
-sudo ufw status
-```
-
-These checks are the documented baseline daily operational checks. 
-
----
-
-## Emergency Procedures
-
-### Nginx outage
-
-```bash
-sudo systemctl status nginx
-sudo ss -tulpn | grep -E ':80|:443'
-sudo nginx -t
-sudo systemctl start nginx
-```
-
-### Application container failure
-
-```bash
-docker ps -a | grep saas-app
-docker logs --tail 50 saas-app
-docker compose restart saas-app
-```
-
-### MySQL failure
-
-```bash
-docker ps | grep mysql-db
-
-docker compose restart mysql-db
-```
-
-If database corruption is suspected:
-
-```bash
-LATEST_BACKUP=$(ls -t /opt/backups/*.tar.gz | head -n 1)
-
-~/linux-saas-infrastructure-lab/backup/restore-mysql.sh \
-  ${LATEST_BACKUP}
-```
-
-### High CPU or memory
-
-```bash
-ps aux --sort=-%cpu | head -n 10
-ps aux --sort=-%mem | head -n 10
-```
-
-If necessary:
-
-```bash
-sudo kill -9 <PID>
-```
-
-The source also documents clearing the Linux page cache:
-
-```bash
-sudo sync
-echo 3 | sudo tee /proc/sys/vm/drop_caches
-```
-
-### Disk exhaustion
-
-```bash
-df -h /
-
-sudo du -ah / 2>/dev/null \
-  | sort -rh \
-  | head -n 10
-```
-
-Clean Docker resources:
-
-```bash
-docker system prune -f
-```
-
-Rotate Nginx logs:
-
-```bash
-sudo logrotate -f /etc/logrotate.d/nginx-saas
-```
-
-### Nginx routing error
-
-```bash
-sudo nginx -t
-
-sudo tail -n 20 /var/log/nginx/saas_error.log
-
-sudo systemctl reload nginx
-```
-
-The complete troubleshooting flow is documented in the project's operations runbook. 
-
----
-
-# Phase 16 — Final End-to-End Validation
-
-The project provides:
-
-```text
-docs/e2e-validation.sh
-```
-
-The validation script checks ten infrastructure conditions.
-
-## Validation Checklist
-
-|  # | Check            | Expected           |
-| -: | ---------------- | ------------------ |
-|  1 | Swap             | Configured         |
-|  2 | UFW              | Active             |
-|  3 | SSH hardening    | Enabled            |
-|  4 | Docker           | Operational        |
-|  5 | Containers       | At least 4 running |
-|  6 | Nginx            | HTTP 200           |
-|  7 | `/metrics`       | HTTP 403           |
-|  8 | Node Exporter    | Metrics available  |
-|  9 | Prometheus       | Healthy targets    |
-| 10 | Backup directory | Operational        |
-
-The documented script checks the infrastructure sequentially and exits with failure when a critical check does not pass. 
-
-Make it executable:
+The script [`docs/e2e-validation.sh`](file:///d:/PROJECTS/linux-saas/linux-saas-infrastructure-lab/docs/e2e-validation.sh) executes automated verification checks:
 
 ```bash
 chmod +x ~/linux-saas-infrastructure-lab/docs/e2e-validation.sh
-```
-
-Run:
-
-```bash
 ~/linux-saas-infrastructure-lab/docs/e2e-validation.sh
 ```
 
-A successful run reports:
+### 10-Point Validation Checklist
+
+| # | Validation Item | Command / Condition Checked | Expected Result | Status |
+| :-: | :--- | :--- | :--- | :---: |
+| **1** | **Swap Space** | `free -m \| awk '/Swap:/ {print $2}'` | Total Swap > 1000 MB | `PASS` |
+| **2** | **UFW Firewall** | `ufw status \| grep "Status: active"` | Firewall active & enforcing rules | `PASS` |
+| **3** | **SSH Hardening** | `grep "PermitRootLogin no" /etc/ssh/sshd_config.d/hardening.conf` | Root login & passwords disabled | `PASS` |
+| **4** | **Docker Daemon** | `docker info` | Docker Engine running & operational | `PASS` |
+| **5** | **Running Containers** | `docker ps -q \| wc -l` | At least 4+ containers running | `PASS` |
+| **6** | **Nginx Reverse Proxy** | `curl -s -I http://127.0.0.1` | HTTP 200 OK response from SaaS app | `PASS` |
+| **7** | **Metrics Endpoint Protection** | `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1/metrics` | **HTTP 403 Forbidden** (Protected) | `PASS` |
+| **8** | **Node Exporter Health** | `curl -s http://127.0.0.1:9100/metrics \| grep node_cpu` | Metrics stream active on port 9100 | `PASS` |
+| **9** | **Prometheus Targets** | `curl -s http://127.0.0.1:9090/api/v1/targets \| grep health` | All targets in `"health": "up"` state | `PASS` |
+| **10** | **Backup Directory** | `[ -d /opt/backups ] && [ -f /opt/backups/*.tar.gz ]` | Backup directory exists with valid archives | `PASS` |
 
 ```text
+==================================================
+    STARTING END-TO-END SYSTEM VALIDATION TEST    
+==================================================
+[ PASS ] Swap Space configured (>= 1GB)
+[ PASS ] UFW Firewall Active
+[ PASS ] SSH Hardening Configured
+[ PASS ] Docker Daemon Operational
+[ PASS ] All Docker Containers Running (>= 4)
+[ PASS ] Nginx Reverse Proxy responding (HTTP 200)
+[ PASS ] Endpoint /metrics Protected (HTTP 403)
+[ PASS ] Node Exporter active on port 9100
+[ PASS ] Prometheus Targets Healthy
+[ PASS ] Backup Directory & Retention Operational
+==================================================
 ALL END-TO-END VALIDATION TESTS PASSED SUCCESSFULLY!
+==================================================
 ```
 
 ---
 
-# Operations URLs
-
-Replace `YOUR_EC2_IP` with the actual Elastic IP.
-
-## SaaS Application
-
-```text
-http://YOUR_EC2_IP/
-```
-
-## Grafana
-
-```text
-http://YOUR_EC2_IP/grafana/
-```
-
-## Uptime Kuma
-
-```text
-http://YOUR_EC2_IP/kuma/
-```
-
-Prometheus and Node Exporter are intended to remain locally/internal rather than being directly exposed publicly.
-
----
-
-# Security Considerations
-
-## AWS Security Group
-
-Only expose:
-
-```text
-22
-80
-443
-```
-
-Do not expose:
-
-```text
-3306
-8000
-9090
-3000
-3001
-```
-
-## UFW
-
-The host firewall denies incoming traffic by default and explicitly permits SSH, HTTP, and HTTPS.
-
-## SSH
-
-The hardening configuration:
-
-```text
-PermitRootLogin no
-PasswordAuthentication no
-X11Forwarding no
-MaxAuthTries 3
-```
-
-## Application Metrics
-
-The application exposes `/metrics` internally, but Nginx denies public access:
-
-```text
-HTTP 403
-```
-
-## Service Binding
-
-Application and monitoring services are bound to localhost on the host where applicable, while MySQL remains on the Docker application network.
-
-## Credentials
-
-Never commit:
-
-```text
-.env
-```
-
-or files containing:
-
-```text
-database passwords
-private keys
-AWS credentials
-API tokens
-administrator passwords
-```
-
-Use environment-specific secret management when moving beyond a lab environment.
-
----
-
-# Logging & Observability
-
-The observability stack consists of multiple layers:
-
-```text
-                    +----------------+
-                    | Uptime Kuma    |
-                    | Availability   |
-                    +-------+--------+
-                            |
-                            v
-Internet ---> Nginx ---> SaaS Application
-                  |             |
-                  |             v
-                  |           Metrics
-                  |             |
-                  |             v
-                  |         Prometheus
-                  |             |
-                  |             v
-                  |           Grafana
-                  |
-                  +--> Nginx Logs
-                       
-Host OS ---> Node Exporter ---> Prometheus
-
-Docker ---> Container Logs ---> Log Inspection
-
-MySQL ---> Container Logs ---> Log Inspection
-```
-
-This provides both:
-
-* **Metrics-based observability**
-* **Availability monitoring**
-* **Log-based troubleshooting**
-
----
-
-# Project Structure
-
-The source documentation implies the following logical repository structure:
+## 📁 Repository Structure
 
 ```text
 linux-saas-infrastructure-lab/
-├── README.md
+├── README.md                              # Main Project Documentation & Architecture Overview
+├── .gitignore                             # Git ignore rules (credentials, logs, dumps)
 │
-├── docker/
-│   ├── .env
-│   ├── docker-compose.yml
-│   └── monitoring/
-│       └── prometheus/
-│           └── prometheus.yml
+├── docker/                                # Docker Container Orchestration
+│   ├── docker-compose.yml                 # Multi-container stack (App, MySQL, Prometheus, Grafana, Kuma)
+│   ├── .env.example                       # Template for environment variables and secrets
+│   ├── monitoring/
+│   │   └── prometheus/
+│   │       └── prometheus.yml             # Prometheus scraping targets & interval configuration
+│   └── nginx/
+│       ├── saas-app.conf                  # Nginx Virtual Host reverse proxy configuration
+│       └── default                        # Backup default configuration
 │
-├── backup/
-│   ├── backup-mysql.sh
-│   └── restore-mysql.sh
+├── backup/                                # Database Backup & Disaster Recovery
+│   ├── backup-mysql.sh                    # Automated mysqldump backup script with 7-day retention
+│   └── restore-mysql.sh                   # Disaster recovery restoration script
 │
-├── docs/
-│   ├── inspect-logs.sh
-│   ├── e2e-validation.sh
-│   └── troubleshooting-guide.md
+├── docs/                                  # Operations, SRE & QA Tooling
+│   ├── e2e-validation.sh                  # 10-Point automated infrastructure verification suite
+│   ├── inspect-logs.sh                    # Interactive live log streaming & inspection CLI tool
+│   └── troubleshooting-guide.md           # SRE Operations Runbook & Daily Checklist
 │
-└── incidents/
-    ├── INC-001-nginx-down.md
-    ├── INC-002-application-down.md
-    ├── INC-003-database-failure.md
-    ├── INC-004-high-cpu.md
-    ├── INC-005-disk-full.md
-    └── INC-006-nginx-proxy.md
-```
-
-The `backup/`, `docs/`, and `incidents/` directories are explicitly created by the documented procedures.  
-
----
-
-# Configuration Files
-
-Important configuration files include:
-
-```text
-/etc/ssh/sshd_config.d/hardening.conf
-/etc/nginx/sites-available/saas-app.conf
-/etc/systemd/system/node_exporter.service
-/etc/logrotate.d/nginx-saas
-/etc/docker/daemon.json
-```
-
-Project-level files include:
-
-```text
-docker/docker-compose.yml
-docker/monitoring/prometheus/prometheus.yml
-backup/backup-mysql.sh
-backup/restore-mysql.sh
-docs/inspect-logs.sh
-docs/e2e-validation.sh
-docs/troubleshooting-guide.md
-incidents/*.md
+└── incidents/                             # SRE Chaos Engineering Post-Mortem Incident Reports
+    ├── INC-001-nginx-down.md              # Incident Report: Nginx Web Server Outage
+    ├── INC-002-application-down.md        # Incident Report: SaaS Application Container Failure
+    ├── INC-003-database-failure.md        # Incident Report: MySQL Database Service Interruption
+    ├── INC-004-high-cpu.md                # Incident Report: High CPU Utilization Stress
+    ├── INC-005-disk-full.md               # Incident Report: Disk Space Depletion Simulation
+    └── INC-006-nginx-proxy.md             # Incident Report: Nginx Upstream Misconfiguration
 ```
 
 ---
 
-# Common Operational Commands
+## 🚀 Quick Start Guide
 
-## Docker
+### Prerequisites
+* AWS EC2 instance running Ubuntu 24.04 LTS with Elastic IP.
+* Ports 22, 80, and 443 open in AWS Security Group.
+* OpenSSH client installed locally.
 
+### 1. Clone the Repository
 ```bash
-docker compose ps
-docker ps
-docker logs --tail 50 saas-app
-docker compose restart saas-app
-docker compose restart mysql-db
+git clone https://github.com/your-username/linux-saas-infrastructure-lab.git ~/linux-saas-infrastructure-lab
+cd ~/linux-saas-infrastructure-lab
+```
+
+### 2. Configure Environment Variables
+```bash
+cd ~/linux-saas-infrastructure-lab/docker
+cp .env.example .env
+# Edit .env with your custom secure passwords:
+nano .env
+```
+
+### 3. Deploy the Container Stack
+```bash
 docker compose up -d
+docker compose ps
 ```
 
-## Nginx
-
+### 4. Deploy Nginx Configuration & Restart Services
 ```bash
-sudo systemctl status nginx
-sudo nginx -t
-sudo systemctl reload nginx
-sudo systemctl start nginx
+sudo cp ~/linux-saas-infrastructure-lab/docker/nginx/saas-app.conf /etc/nginx/sites-available/saas-app.conf
+sudo ln -sf /etc/nginx/sites-available/saas-app.conf /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-## Firewall
-
+### 5. Run Automated End-to-End Validation
 ```bash
-sudo ufw status
+chmod +x ~/linux-saas-infrastructure-lab/docs/e2e-validation.sh
+~/linux-saas-infrastructure-lab/docs/e2e-validation.sh
+```
+
+---
+
+## 🛠️ Operations Runbook & Cheat Sheet
+
+### Service Management
+```bash
+# Check Docker Stack Status
+docker compose -f ~/linux-saas-infrastructure-lab/docker/docker-compose.yml ps
+
+# Restart specific services
+docker compose -f ~/linux-saas-infrastructure-lab/docker/docker-compose.yml restart saas-app
+docker compose -f ~/linux-saas-infrastructure-lab/docker/docker-compose.yml restart mysql-db
+
+# Check and reload Nginx
+sudo nginx -t && sudo systemctl reload nginx
+sudo systemctl status nginx --no-pager
+```
+
+### Resource & Security Inspection
+```bash
+# Check Memory & Swap
+free -h
+
+# Check Disk Usage
+df -h /
+
+# Check CPU & Top Processes
+top -b -n 1 | head -n 15
+
+# Check Firewall Rules
 sudo ufw status verbose
 ```
 
-## System Resources
-
+### Backup & Disaster Recovery Execution
 ```bash
-free -h
-df -h /
-top -b -n 1
-```
+# Trigger manual backup
+~/linux-saas-infrastructure-lab/backup/backup-mysql.sh
 
-## Node Exporter
-
-```bash
-curl -s http://127.0.0.1:9100/metrics
-```
-
-## Prometheus
-
-```bash
-curl -s http://127.0.0.1:9090/api/v1/targets
-```
-
-## Backup
-
-```bash
+# List available backup archives
 ls -lh /opt/backups/
+
+# Restore database from latest backup
+LATEST=$(ls -t /opt/backups/*.tar.gz | head -n 1)
+~/linux-saas-infrastructure-lab/backup/restore-mysql.sh "$LATEST"
+```
+
+### Interactive Centralized Log Streaming
+```bash
+~/linux-saas-infrastructure-lab/docs/inspect-logs.sh
 ```
 
 ---
 
-# Troubleshooting Principles
+## 🔒 Security & Hardening Summary
 
-When troubleshooting the infrastructure, follow this general sequence:
-
-```text
-1. Detect
-   |
-   v
-2. Determine scope
-   |
-   v
-3. Check service state
-   |
-   v
-4. Inspect logs
-   |
-   v
-5. Verify network connectivity
-   |
-   v
-6. Identify root cause
-   |
-   v
-7. Apply remediation
-   |
-   v
-8. Verify recovery
-   |
-   v
-9. Document prevention
-```
-
-Useful sources of evidence include:
-
-```text
-systemctl
-ss
-curl
-docker ps
-docker logs
-journalctl
-dmesg
-Nginx access logs
-Nginx error logs
-Prometheus targets
-Grafana metrics
-Uptime Kuma status
-```
+1. **Defense-in-Depth Firewalling**: Network security enforced at both AWS cloud perimeter (Security Group) and operating system level (UFW).
+2. **Zero Ingress on Internal Services**: Databases and monitoring backends are strictly inaccessible from public networks.
+3. **Information Disclosure Prevention**: Nginx denies public HTTP access to `/metrics` (HTTP 403), ensuring internal metrics are only ingested by the internal Prometheus container.
+4. **SSH Attack Surface Reduction**: Root login disabled, password authentication disabled, maximum auth attempts capped at 3.
+5. **Memory & Storage Safety**: 2 GB swap file protects against OOM kernel panics; Docker log caps and logrotate protect against storage exhaustion.
+6. **Least Privilege**: Application containers run in isolated Docker bridge networks without host network privileges.
 
 ---
 
-# Learning Outcomes
+## 🎓 Learning Outcomes & Core Competencies
 
-This project demonstrates practical experience with:
+This project demonstrates practical competency in:
 
-### Linux Administration
-
-* Ubuntu Server administration
-* System services
-* systemd
-* Swap
-* Filesystem management
-* Resource inspection
-* Linux permissions
-
-### Networking
-
-* AWS Security Groups
-* Public/private service exposure
-* localhost binding
-* Docker bridge networking
-* Docker internal DNS
-* Reverse proxying
-* Network tracing
-
-### Security
-
-* UFW
-* SSH hardening
-* Root-login restrictions
-* Password-authentication restrictions
-* Internal service isolation
-* Metrics endpoint protection
-
-### Containers
-
-* Docker Engine
-* Docker Compose V2
-* Container networking
-* Persistent volumes
-* Container lifecycle management
-* Container logging
-
-### Monitoring
-
-* Prometheus
-* Node Exporter
-* Grafana
-* Uptime Kuma
-* Application metrics
-* Infrastructure metrics
-* Availability monitoring
-
-### Operations
-
-* Automated backups
-* Database restoration
-* Cron
-* Logrotate
-* Incident response
-* Root cause analysis
-* Operational runbooks
-* Disaster recovery testing
-* End-to-end validation
+* **Cloud & Linux Infrastructure**: AWS EC2 provisioning, Elastic IP management, Ubuntu 24.04 LTS administration, systemd service management, swap space configuration, and storage management.
+* **Network & Security Engineering**: Cloud Security Groups, UFW firewall configuration, OpenSSH server hardening, reverse proxy design, and network isolation.
+* **Container Orchestration**: Docker Engine, Docker Compose V2 multi-container orchestration, persistent volume lifecycle, and bridge networking.
+* **Observability & Site Reliability Engineering (SRE)**: Prometheus time-series scraping, Node Exporter host telemetry, Grafana dashboards, and Uptime Kuma synthetic availability checks.
+* **Automation & Disaster Recovery**: Bash scripting, automated database backups via `mysqldump`, cron scheduling, retention lifecycle management, and verified DR restoration.
+* **Incident Response & Chaos Engineering**: Controlled failure injection, root cause analysis (RCA), emergency runbooks, structured post-mortem reports, and automated QA verification.
 
 ---
 
-# Project Workflow
+## 📄 License & Attribution
 
-The complete implementation follows this operational sequence:
+This project is open-source and available under the **MIT License**. Created as part of the **Linux SaaS Infrastructure Monitoring & Operations Lab**.
 
-```text
-AWS Provisioning
-      |
-      v
-Security Group
-      |
-      v
-EC2 + Elastic IP
-      |
-      v
-SSH Access
-      |
-      v
-Linux Hardening
-      |
-      +--> Swap
-      +--> UFW
-      +--> SSH Hardening
-      |
-      v
-Docker Installation
-      |
-      v
-SaaS + MySQL Deployment
-      |
-      v
-Nginx Reverse Proxy
-      |
-      v
-Node Exporter
-      |
-      v
-Prometheus
-      |
-      v
-Grafana
-      |
-      v
-Uptime Kuma
-      |
-      v
-Automated Backup
-      |
-      v
-Logging & Observability
-      |
-      v
-Incident Simulations
-      |
-      v
-Incident Documentation
-      |
-      v
-Operations Runbook
-      |
-      v
-E2E Validation
-```
-
----
-
-# Conclusion
-
-The Linux SaaS Infrastructure Monitoring & Operations Lab demonstrates a complete infrastructure lifecycle, from cloud provisioning and Linux hardening through containerized application deployment, reverse proxy configuration, observability, backup and recovery, incident response, and final validation.
-
-The project is particularly focused on the operational side of infrastructure: not only deploying services, but also monitoring them, detecting failures, troubleshooting them, recovering from incidents, protecting logs and storage, and verifying that the infrastructure remains operational.
-
-The final E2E validation consolidates the most important infrastructure checks into a single automated test covering swap, firewall, SSH hardening, Docker, containers, Nginx, metrics protection, Node Exporter, Prometheus, and backups. 
-
----
-
-# Documentation Gaps / Assumptions
-
-1. **HTTPS/TLS implementation is not actually documented.**
-   Port `443` is allowed in the AWS Security Group, but the provided Nginx configuration only explicitly configures HTTP on port `80`. Therefore this README does not claim that TLS/HTTPS is implemented.
-
-2. **The exact final `docker-compose.yml` changes across phases.**
-   The source repeatedly rewrites the Compose file as Prometheus, Grafana, and Uptime Kuma are introduced. This README represents the resulting architecture rather than reproducing every intermediate rewrite.
-
-3. **Credentials in the source are treated as secrets.**
-   The original documentation contains database and Grafana credentials. They have deliberately been replaced with placeholders here.
-
-4. **The source contains an inconsistency around the Uptime Kuma route.**
-   The public UI is accessed through `/kuma/`, while one rewrite rule references `/status`. The README follows the actual documented public `/kuma/` route and does not present `/status/` as the primary access URL. 
-
-5. **The source contains a documentation inconsistency in the incident-prevention narrative.**
-   Some incident reports mention controls such as MySQL health checks, container CPU limits, or systemd auto-restart policies whose exact final configuration is not fully shown in the supplied deployment steps. Those controls are therefore described only as documented incident-prevention measures rather than claimed as independently verified final configuration.
-
-6. **The source does not provide a complete cleanup/teardown procedure.**
-   Therefore a destructive AWS teardown procedure has not been invented.
-
-7. **The source uses an example Elastic IP in several commands.**
-   This README replaces it with `YOUR_EC2_IP` so the documentation is reusable and does not preserve an environment-specific address.
-
----
-
-# Suggested Repository Structure
-
-```text
-linux-saas-infrastructure-lab/
-├── README.md
-├── .gitignore
-│
-├── docker/
-│   ├── docker-compose.yml
-│   ├── .env.example
-│   └── monitoring/
-│       └── prometheus/
-│           └── prometheus.yml
-│
-├── backup/
-│   ├── backup-mysql.sh
-│   └── restore-mysql.sh
-│
-├── docs/
-│   ├── e2e-validation.sh
-│   ├── inspect-logs.sh
-│   └── troubleshooting-guide.md
-│
-├── incidents/
-│   ├── INC-001-nginx-down.md
-│   ├── INC-002-application-down.md
-│   ├── INC-003-database-failure.md
-│   ├── INC-004-high-cpu.md
-│   ├── INC-005-disk-full.md
-│   └── INC-006-nginx-proxy.md
-│
-└── screenshots/
-    └── ...
-```
-
-A `.gitignore` should exclude sensitive and runtime-generated content such as:
-
-```text
-.env
-*.pem
-*.key
-*.log
-```
-
-The repository structure above is a recommendation derived from the project artifacts documented in the source; it is not presented as an existing repository tree.
+> For the detailed, step-by-step implementation guide with all command logs and configuration screenshots, visit the **[Notion Implementation Guide](https://your-notion-link-here.notion.site)**.
