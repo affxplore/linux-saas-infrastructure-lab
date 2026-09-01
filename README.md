@@ -1,4 +1,4 @@
-# 🚀 Linux SaaS Infrastructure Monitoring & Operations Lab
+# Linux SaaS Infrastructure Monitoring & Operations Lab
 
 [![AWS EC2](https://img.shields.io/badge/AWS%20EC2-Ubuntu%2024.04%20LTS-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)](https://aws.amazon.com/ec2/)
 [![Docker Compose](https://img.shields.io/badge/Docker%20Compose-v2-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
