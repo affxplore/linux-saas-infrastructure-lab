@@ -1,0 +1,5 @@
+PUBLIC_IP=44.245.76.240
+DB_USER=saas_user
+DB_PASSWORD=saas_password
+DB_NAME=saas_db
+DB_ROOT_PASSWORD=root_password
